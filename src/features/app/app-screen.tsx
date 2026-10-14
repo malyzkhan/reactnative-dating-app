@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Colors } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useAuth } from '@/features/auth/auth-provider';
 import {
   profiles,
   sampleChats,
@@ -26,6 +27,7 @@ import {
 
 export default function AppScreen({ tab }: { tab: HomeTab }) {
   const theme = useTheme();
+  const { signOut } = useAuth();
   const { height: windowHeight } = useWindowDimensions();
   const profilePhotoHeight = Math.max(360, Math.min(440, windowHeight * 0.46));
   const [filterVisible, setFilterVisible] = useState(false);
@@ -281,6 +283,9 @@ export default function AppScreen({ tab }: { tab: HomeTab }) {
             onToggleInterest={toggleInterest}
             onMessage={setNotice}
             onOpenPreferences={() => setFilterVisible(true)}
+            onSignOut={() => {
+              void signOut().catch(() => setNotice('We couldn’t sign you out. Please try again.'));
+            }}
           />
         )}
       </ScrollView>
@@ -791,6 +796,7 @@ function ProfileScreen({
   onToggleInterest,
   onMessage,
   onOpenPreferences,
+  onSignOut,
 }: {
   theme: Theme;
   name: string;
@@ -803,13 +809,14 @@ function ProfileScreen({
   onToggleInterest: (interest: string) => void;
   onMessage: (message: string) => void;
   onOpenPreferences: () => void;
+  onSignOut: () => void;
 }) {
   const settings = [
     { label: 'Dating intentions', detail: intention, mark: '♡' },
     { label: 'Discovery preferences', detail: 'Age, distance & more', mark: '⌕' },
     { label: 'Profile verification', detail: 'Build trust with a verified badge', mark: '✓' },
     { label: 'Privacy & safety', detail: 'Control who sees your profile', mark: '⌑' },
-    { label: 'Account', detail: 'Login, notifications & support', mark: '···' },
+    { label: 'Account', detail: 'Sign out of Twin', mark: '···' },
   ];
   const interests = ['Art & design', 'Travel', 'Cooking', 'Live music', 'Books', 'Outdoors'];
 
@@ -924,6 +931,10 @@ function ProfileScreen({
               onPress={() => {
                 if (item.label === 'Discovery preferences') {
                   onOpenPreferences();
+                  return;
+                }
+                if (item.label === 'Account') {
+                  onSignOut();
                   return;
                 }
 

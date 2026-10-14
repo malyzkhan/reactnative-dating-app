@@ -11,6 +11,11 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 
 import { Colors } from '@/constants/theme';
+import {
+  AuthLoadingScreen,
+  AuthProvider,
+  useAuth,
+} from '@/features/auth/auth-provider';
 
 void SplashScreen.preventAutoHideAsync();
 SplashScreen.setOptions({ duration: 250, fade: true });
@@ -42,16 +47,38 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={DefaultTheme}>
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: Colors.light.background },
-        }}>
-        <Stack.Screen name="index" />
+      <AuthProvider>
+        <RootNavigator />
+      </AuthProvider>
+    </ThemeProvider>
+  );
+}
+
+function RootNavigator() {
+  const { status, session } = useAuth();
+
+  if (status === 'loading') {
+    return <AuthLoadingScreen />;
+  }
+
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: Colors.light.background },
+      }}>
+      <Stack.Screen name="index" />
+      <Stack.Protected guard={session !== null}>
         <Stack.Screen name="(tabs)" />
+      </Stack.Protected>
+      <Stack.Protected guard={session === null}>
         <Stack.Screen name="sign-up" />
         <Stack.Screen name="sign-in" />
-      </Stack>
-    </ThemeProvider>
+        <Stack.Screen name="forgot-password" />
+        <Stack.Screen name="verification-pending" />
+      </Stack.Protected>
+      <Stack.Screen name="auth/callback" />
+      <Stack.Screen name="auth/reset-password" />
+    </Stack>
   );
 }

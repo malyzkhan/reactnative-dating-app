@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
 import { Colors } from '@/constants/theme';
+import { useAuth } from '@/features/auth/auth-provider';
 import { setIntroCompleted, getIntroCompleted } from '@/lib/intro-storage';
 
 const steps = [
@@ -34,6 +35,7 @@ const steps = [
 type IntroStatus = 'checking' | 'showing' | 'redirecting' | 'error';
 
 export default function IntroScreen() {
+  const { session } = useAuth();
   const [step, setStep] = useState(0);
   const [status, setStatus] = useState<IntroStatus>('checking');
   const [errorMessage, setErrorMessage] = useState('');
@@ -46,7 +48,7 @@ export default function IntroScreen() {
     getIntroCompleted()
       .then((completed) => {
         if (active) {
-          setStatus(completed ? 'redirecting' : 'showing');
+          setStatus(session ? 'redirecting' : completed ? 'redirecting' : 'showing');
         }
       })
       .catch((error: unknown) => {
@@ -60,20 +62,20 @@ export default function IntroScreen() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [session]);
 
   useEffect(() => {
     if (status === 'redirecting') {
-      router.replace('/sign-in');
+      router.replace(session ? '/(tabs)/discover' : '/sign-in');
     }
-  }, [status]);
+  }, [session, status]);
 
   const retryReadStatus = async () => {
     setStatus('checking');
     setErrorMessage('');
     try {
       const completed = await getIntroCompleted();
-      setStatus(completed ? 'redirecting' : 'showing');
+      setStatus(session || completed ? 'redirecting' : 'showing');
     } catch (error) {
       console.error('Unable to read Twin intro status.', error);
       setErrorMessage('We couldn’t load your saved welcome status. Please try again.');
@@ -98,7 +100,7 @@ export default function IntroScreen() {
     }
   };
 
-  if (status === 'checking' || status === 'redirecting') {
+  if (session || status === 'checking' || status === 'redirecting') {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.loading}>

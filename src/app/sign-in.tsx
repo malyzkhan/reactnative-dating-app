@@ -1,5 +1,5 @@
-import AuthPlaceholder from '@/features/auth/auth-placeholder';
+import { SignInScreen } from '@/features/auth/auth-screens';
 
 export default function SignInRoute() {
-  return <AuthPlaceholder mode="sign-in" />;
+  return <SignInScreen />;
 }
